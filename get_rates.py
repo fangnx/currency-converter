@@ -2,8 +2,13 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import sys
 
+RATE_TYPES = ["Buying Rate", "Cash Buying Rate", "Selling Rate", "Cash Selling Rate", "Middle Rate"]
+
+
 def main():
-    currency_type = str(sys.argv[1])
+    # currency_type = str(sys.argv[1])
+
+    currency_type = input("Enter the currency type: ")
 
     url = 'http://www.boc.cn/sourcedb/whpj/enindex.html'
     html = urlopen(url).read().decode('utf8')
@@ -12,14 +17,21 @@ def main():
     all_tables = soup.find('table', width='600')
     all_rows = all_tables.findChildren('tr')
 
-    currency_dict = {row.findChildren('td')[0].string : list_to_dict(row.findChildren('td')) for row in all_rows[2:]}
+    # Store the currency rates in a dictionary
+    currency_dict = {row.findChildren('td')[0].string : row.findChildren('td') for row in all_rows[2:]}
 
-    print(currency_dict.get(currency_type))
+    print_all_rates(currency_dict, currency_type)
 
-def list_to_dict(row):
-    return {'Buying Rate': row[1].string, 'Cash Buying Rate': row[2].string,
-            'Selling Rate': row[3].string, 'Cash Selling Rate': row[4].string,
-            'Middle Rate': row[5].string}
+
+def print_all_rates(dict, type):
+    currency_row = dict.get(type)
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    print("The exchange rate from RMB to " + type + ":\n")
+    for i, type_name in enumerate(RATE_TYPES):
+        print(type_name + ": " + currency_row[i+1].string)
+    print("\nPublish Time: " + currency_row[6].string)
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+
 
 if __name__ == '__main__':
     main()
