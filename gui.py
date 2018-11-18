@@ -1,18 +1,24 @@
-from PyQt5.QtWidgets import (QWidget, QApplication, QLabel,
-                             QPushButton, QLineEdit, QGridLayout)
-
-from PyQt5.QtGui import QFont, QIntValidator, QDoubleValidator, QIcon
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSlot, QFile, QIODevice
+from PyQt5.QtWidgets import (QWidget, QApplication, QLabel, QPushButton, QLineEdit, QGridLayout)
+from PyQt5.QtGui import QIntValidator, QDoubleValidator
 
 import sys
 import get_rates
 
+
 class MyWindow(QWidget):
 
     def __init__(self):
+
         super().__init__()
         self.init_UI()
-        self.setStyleSheet("font-size: 14pt; font-family: Courier")
+
+        try:
+            f = open("./style.css")
+            self.setStyleSheet(f.read())
+
+        except IOError:
+            print("Exception: No stylesheet file found.")
 
 
     def init_UI(self):
@@ -68,15 +74,14 @@ class MyWindow(QWidget):
 
 
 
-def show_mywindow():
+def show_app():
     app = QApplication(sys.argv)
     w = MyWindow()
 
-    # QLabel(w).setText("<p style='color: blue; margin-left: 20px; margin-right: 20px'><b>hello world</b></p>")
     QLabel(w).setText("<p style='color: blue; margin-left: 20px; margin-right: 20px>" + get_rates.to_string(get_rates.get_all_rates(), "CAD") + "</p>")
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
-    show_mywindow()
+    show_app()

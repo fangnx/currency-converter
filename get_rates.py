@@ -10,16 +10,6 @@ def main():
     # currency_type = input("Enter the currency type: ")
     currency_type = "CAD"
 
-    # url = "http://www.boc.cn/sourcedb/whpj/enindex.html"
-    # html = urlopen(url).read().decode('utf8')
-    #
-    # soup = BeautifulSoup(html, features="lxml")
-    # all_tables = soup.find("table", width="600")
-    # all_rows = all_tables.findChildren("tr")
-    #
-    # # Store the currency rates in a dictionary
-    # currency_dict = {row.findChildren("td")[0].string : row.findChildren("td") for row in all_rows[2:]}
-
     currency_dict = get_all_rates()
 
     print_all_rates(currency_dict, currency_type)
