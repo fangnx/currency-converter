@@ -1,69 +1,58 @@
-from urllib.request import urlopen
+import requests
 from bs4 import BeautifulSoup
-import sys
-
-RATE_TYPES = ["Buying Rate", "Cash Buying Rate", "Selling Rate", "Cash Selling Rate", "Middle Rate"]
+from ast import literal_eval
 
 
-def main():
+def get_all_curr_types():
 
-    # currency_type = input("Enter the currency type: ")
-    currency_type = "CAD"
+    url = "https://www.x-rates.com/table/?from=USD&amount=1"
+    raw_content = requests.get(url).text
+    soup = BeautifulSoup(raw_content, "lxml")
+    chart = soup.find("select", class_="ccDbx").find_all("option")
+    curr_type_list = [c.string.split(" - ") for c in chart]
 
-    currency_dict = get_all_rates()
-
-    print_all_rates(currency_dict, currency_type)
-
-
-def get_all_rates():
-
-    url = "http://www.boc.cn/sourcedb/whpj/enindex.html"
-    html = urlopen(url).read().decode('utf8')
-
-    soup = BeautifulSoup(html, features="lxml")
-    all_tables = soup.find("table", width="600")
-    all_rows = all_tables.findChildren("tr")
-
-    # Store the currency rates in a dictionary
-    currency_dict = {row.findChildren("td")[0].string: row.findChildren("td") for row in all_rows[2:]}
-
-    return currency_dict
+    return curr_type_list
 
 
-def to_string(currency_dict, currency_type):
+def get_rates(base_curr):
 
-    output = ""
+    url = "https://www.x-rates.com/table/?from=" + base_curr + "&amount=1"
+    get = requests.get(url)
+    if get.status_code != requests.codes.ok:
+        return -1
 
-    currency_row = currency_dict.get(currency_type)
-    for i, type_name in enumerate(RATE_TYPES):
-        output += (type_name + ": " + currency_row[i + 1].string)
+    raw_content = get.text
+    soup = BeautifulSoup(raw_content, "lxml")
+    table = soup.find("table", class_="tablesorter ratesTable").find_all("tr")
 
-    return output
+    curr_rates = {}
+    for t in table[1::]:
+        cells = t.find_all("td")
+        type = cells[0].get_text()
+        rate = cells[1].a.get_text()
+        curr_rates[type] = rate
 
-
-
-
-
-def print_all_rates(dict, type):
-
-    currency_row = dict.get(type)
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    print("The exchange rate from " + type + " to RMB:\n")
-
-    for i, type_name in enumerate(RATE_TYPES):
-        print(type_name + ": " + currency_row[i+1].string)
-    print("\nPublish Time: " + currency_row[6].string)
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    return curr_rates
 
 
-if __name__ == '__main__':
-    main()
+def get_montly_avg(base_curr, target_curr, year):
+
+    url = "https://www.x-rates.com/average/?from=" + base_curr \
+          + "&to=" + target_curr + "&amount=1&year=" + str(year)
+
+    raw_content = requests.get(url).text
+    soup = BeautifulSoup(raw_content, "lxml")
+    avg_list = soup.find_all("ul", class_="OutputLinksAvg")
+
+    avg_rates = {line.find("span", class_="avgMonth").get_text():
+                     line.find("span", class_="avgRate").get_text()
+                 for line in avg_list[0].find_all("li")}
+
+    return avg_rates
 
 
-
-
-
-
+def calculate_float(rate, amt):
+    return literal_eval(rate) * amt
 
 
 
