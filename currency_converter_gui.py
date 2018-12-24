@@ -1,11 +1,11 @@
-from PyQt5.QtCore import Qt, pyqtSlot, QFile, QIODevice
+from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import (QWidget, QApplication, QLabel, QPushButton,
                              QLineEdit, QGridLayout,QListWidget, QListWidgetItem)
 from PyQt5.QtGui import QDoubleValidator
 
 import sys
 from get_rates import get_all_curr_types
-from convert_currency import convert_real_time, to_short_name
+from currency_converter import convert_real_time, to_short_name
 
 
 class MyWindow(QWidget):
@@ -32,28 +32,11 @@ class MyWindow(QWidget):
         to_label = QLabel("To:")
         amount_label = QLabel("Amount")
 
-        self.from_line = QListWidget()
-        self.from_line.setSelectionMode(QListWidget.SingleSelection)
-        curr_type_list = get_all_curr_types()
-        for t in curr_type_list:
-            self.from_line.addItem(t[1])
-
-        self.from_line.itemSelectionChanged.connect(self.base_currency_selected)
-
-        self.to_line = QListWidget()
-        self.to_line.setSelectionMode(QListWidget.SingleSelection)
-        curr_type_list = get_all_curr_types()
-        for t in curr_type_list:
-            self.to_line.addItem(t[1])
-
-        self.to_line.itemSelectionChanged.connect(self.target_currency_selected)
-
-        self.amount_line = QLineEdit()
-        self.amount_line.setValidator(QDoubleValidator())
-        self.amount_line.setAlignment(Qt.AlignRight)
-
-        button_enter = QPushButton("Enter", self)
-        button_enter.clicked.connect(self.on_click_enter)
+        self.from_line_widget()
+        self.to_line_widget()
+        self.amount_line_widget()
+        self.output_line_widget()
+        self.enter_button_widget()
 
         grid = QGridLayout()
         grid.setSpacing(5)
@@ -67,10 +50,51 @@ class MyWindow(QWidget):
         grid.addWidget(amount_label, 1, 0)
         grid.addWidget(self.amount_line, 1, 1)
 
-        grid.addWidget(button_enter, 2, 1)
+        grid.addWidget(self.output_line, 1, 3)
+
+        grid.addWidget(self.enter_button, 2, 1)
 
         self.setLayout(grid)
         self.show()
+
+
+    def from_line_widget(self):
+        self.from_line = QListWidget()
+        self.from_line.setSelectionMode(QListWidget.SingleSelection)
+        curr_type_list = get_all_curr_types()
+        for t in curr_type_list:
+            self.from_line.addItem(t[1])
+
+        self.from_line.itemSelectionChanged.connect(self.base_currency_selected)
+
+        return self.from_line
+
+
+    def to_line_widget(self):
+        self.to_line = QListWidget()
+        self.to_line.setSelectionMode(QListWidget.SingleSelection)
+        curr_type_list = get_all_curr_types()
+        for t in curr_type_list:
+            self.to_line.addItem(t[1])
+
+        self.to_line.itemSelectionChanged.connect(self.target_currency_selected)
+
+
+    def amount_line_widget(self):
+        self.amount_line = QLineEdit()
+        self.amount_line.setValidator(QDoubleValidator())
+        self.amount_line.setAlignment(Qt.AlignRight)
+
+
+    def output_line_widget(self):
+        self.output_line = QLineEdit()
+        self.output_line.setAlignment(Qt.AlignRight)
+        self.output_line.setReadOnly(True)
+
+
+    def enter_button_widget(self):
+        self.enter_button = QPushButton("Enter", self)
+        self.enter_button.clicked.connect(self.on_click_enter)
 
 
     def base_currency_selected(self):
@@ -88,7 +112,7 @@ class MyWindow(QWidget):
 
         out = convert_real_time(self.base_currency, self.target_currency,
                                 float(self.amount_line.text()))
-        print(out)
+        self.output_line.insert(str(out))
 
 
     def key_press_handler(self, e):
